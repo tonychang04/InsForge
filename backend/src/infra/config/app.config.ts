@@ -56,13 +56,14 @@ export interface AppConfig {
     trustProxy: TrustProxySetting;
   };
   database: {
+    /** Full connection string (e.g. a Neon database). Takes precedence over host/port/user/password. */
+    url: string | undefined;
     host: string;
     port: number;
     name: string;
     user: string;
     password: string;
     dir: string;
-    postgrestBaseUrl: string;
   };
   auth: {
     rootAdminUsername: string;
@@ -148,13 +149,13 @@ export function loadConfig(): AppConfig {
       trustProxy: parseTrustProxySetting(process.env.TRUST_PROXY),
     },
     database: {
+      url: process.env.DATABASE_URL || undefined,
       host: process.env.POSTGRES_HOST || 'localhost',
       port: parseEnvInt(process.env.POSTGRES_PORT, 5432),
       name: process.env.POSTGRES_DB || 'insforge',
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres',
       dir: process.env.DATABASE_DIR || path.join(__dirname, '../../data'),
-      postgrestBaseUrl: process.env.POSTGREST_BASE_URL || 'http://localhost:5430',
     },
     auth: {
       rootAdminUsername: process.env.ROOT_ADMIN_USERNAME || process.env.ADMIN_EMAIL || '',

@@ -70,20 +70,6 @@ export class TokenManager {
   }
 
   /**
-   * Generate PostgREST project admin token (never expires)
-   * Used only for internal PostgREST proxy requests
-   */
-  generatePostgrestAdminToken(): string {
-    const payload = {
-      role: 'project_admin',
-    };
-    return jwt.sign(payload, JWT_SECRET, {
-      algorithm: 'HS256',
-      // No expiresIn means token never expires
-    });
-  }
-
-  /**
    * Generate refresh token for secure session management
    */
   generateRefreshToken(
