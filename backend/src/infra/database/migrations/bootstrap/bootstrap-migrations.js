@@ -37,6 +37,33 @@ const { Pool } = pg;
 const PROVISIONED_SCHEMA_MARKERS = ['auth.users', 'system.secrets', 'storage.objects'];
 
 /**
+ * Legacy database roles referenced by historical migrations (GRANTs and RLS
+ * policies). The docker image used to create them in db-init.sql at container
+ * init; on external/managed Postgres (e.g. Neon) there is no init hook, so we
+ * create them here before migrations run. NOLOGIN — they are permission
+ * targets, not connection users.
+ */
+const LEGACY_ROLES = ['anon', 'authenticated', 'project_admin'];
+
+async function ensureLegacyRoles(client) {
+  for (const role of LEGACY_ROLES) {
+    // CREATE ROLE has no IF NOT EXISTS; guard via catalog lookup and tolerate
+    // races/permission differences across providers with a warning.
+    try {
+      const { rows } = await client.query('SELECT 1 FROM pg_roles WHERE rolname = $1', [role]);
+      if (rows.length === 0) {
+        await client.query(`CREATE ROLE ${role} NOLOGIN`);
+        logger.info(`Bootstrap: created legacy role ${role}`);
+      }
+    } catch (error) {
+      logger.warn(
+        `Bootstrap: could not ensure role ${role}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+}
+
+/**
  * Pure decision helper (exported for unit testing).
  *
  * Returns true when node-pg-migrate must NOT be allowed to run, because doing so
@@ -104,6 +131,8 @@ export async function bootstrapMigrations() {
     const client = await pool.connect();
 
     try {
+      await ensureLegacyRoles(client);
+
       // Check if old _migrations table exists in public schema
       const oldTableExists = await client.query(`
         SELECT EXISTS (

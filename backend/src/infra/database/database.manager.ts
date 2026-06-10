@@ -39,14 +39,10 @@ export class DatabaseManager {
     await fs.mkdir(this.dataDir, { recursive: true });
 
     this.pool = new Pool({
-      host: appConfig.database.host,
-      port: appConfig.database.port,
-      database: appConfig.database.name,
-      user: appConfig.database.user,
-      password: appConfig.database.password,
+      ...DatabaseManager.connectionConfig(),
       max: 20,
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: appConfig.database.url ? 10000 : 2000,
     });
   }
 
@@ -200,16 +196,35 @@ export class DatabaseManager {
   }
 
   /**
-   * Create a dedicated client for operations that can't use pooled connections (e.g., LISTEN/NOTIFY)
+   * Connection settings shared by the pool and dedicated clients.
+   * DATABASE_URL (e.g. a Neon connection string) takes precedence over
+   * the individual POSTGRES_* variables.
    */
-  createClient(): Client {
-    return new Client({
+  private static connectionConfig(): {
+    connectionString?: string;
+    host?: string;
+    port?: number;
+    database?: string;
+    user?: string;
+    password?: string;
+  } {
+    if (appConfig.database.url) {
+      return { connectionString: appConfig.database.url };
+    }
+    return {
       host: appConfig.database.host,
       port: appConfig.database.port,
       database: appConfig.database.name,
       user: appConfig.database.user,
       password: appConfig.database.password,
-    });
+    };
+  }
+
+  /**
+   * Create a dedicated client for operations that can't use pooled connections (e.g., LISTEN/NOTIFY)
+   */
+  createClient(): Client {
+    return new Client(DatabaseManager.connectionConfig());
   }
 
   async close(): Promise<void> {
