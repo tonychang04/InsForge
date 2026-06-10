@@ -38,6 +38,35 @@ compute running agent-written code, and object storage.
 
 Historical migrations are untouched. The docker self-host path keeps working.
 
+## Target architecture (beyond this PoC)
+
+The PoC keeps InsForge auth as a running service and verifies its JWT in the compute
+example. The target goes further — the platform runs **no app-layer services at all**:
+
+- **Everything app-layer is the user's code.** Auth (sessions, JWT, OAuth — their
+  choice; the JWT in the example was a convention, not a requirement), API endpoints,
+  and the storage protocol are all written by the agent in the project's compute.
+  The platform ships hardened **scaffolds** (auth, storage presigning, payments) as
+  starting points the user owns, not services it operates.
+- **Storage is direct-to-S3.** The platform provisions a bucket prefix and mints
+  tightly-scoped credentials (per project and per branch); the user's compute mints
+  presigned URLs and defines its own upload protocol. S3 POST policies replace
+  in-path enforcement; a CDN serves public objects; metering is async.
+- **The platform owns only:** real resources (Neon branch, S3 prefix, compute,
+  domains), their credentials, scaffolds, and control-plane ops (branching, merge,
+  backups, observability, billing, a project-scoped email API).
+- **Code lives in the World.** A World = { CoW code workspace, Neon branch, S3
+  prefix, env vars, runtime template }. Agents write through a workspace API
+  (read/write/run/tail); cloning a World is sub-second (one Neon API call + one
+  CoW snapshot); git is history, not deployment.
+- **The cloneability boundary is explicit.** Postgres-maximalism (queues, vector,
+  full-text in Neon) extends clone coverage; resources outside Neon+S3+workspace
+  attach as explicitly non-branching; apps that outgrow the model eject cleanly
+  (their database, their repo, standard resources).
+
+The litmus test for any platform feature: is it a resource, a scaffold, or
+control-plane ops? If none, it's just code the agent should write.
+
 ## Deliberately not done (yet)
 
 - **Schedules** run from the control plane, not pg_cron/http inside the database — the

@@ -9,6 +9,11 @@
  * Auth integration: verifies the JWT issued by the InsForge auth service
  * (same JWT_SECRET, HS256). The token's `sub` is the user id.
  *
+ * Note: the JWT here is this template's choice, not a platform requirement.
+ * In the target architecture auth itself is agent-written code in this same
+ * compute (scaffolded from the InsForge auth template), and the session
+ * mechanism — JWT, opaque tokens, cookie sessions — is up to the app.
+ *
  * Run:
  *   DATABASE_URL=postgres://... JWT_SECRET=... node examples/agent-compute/server.mjs
  */

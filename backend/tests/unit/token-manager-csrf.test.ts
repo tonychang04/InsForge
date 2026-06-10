@@ -123,15 +123,4 @@ describe('TokenManager refresh CSRF tokens', () => {
     expect(payload.email).toBe('anon@insforge.com');
   });
 
-  it('generates PostgREST admin tokens without a fake admin subject', () => {
-    const postgrestToken = tokenManager.generatePostgrestAdminToken();
-    const payload = jwt.verify(postgrestToken, process.env.JWT_SECRET ?? '') as Record<
-      string,
-      unknown
-    >;
-
-    expect(payload.role).toBe('project_admin');
-    expect(payload.sub).toBeUndefined();
-    expect(payload.email).toBeUndefined();
-  });
 });

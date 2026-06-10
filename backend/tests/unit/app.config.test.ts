@@ -285,7 +285,7 @@ describe('config.database', () => {
       'POSTGRES_USER',
       'POSTGRES_PASSWORD',
       'DATABASE_DIR',
-      'POSTGREST_BASE_URL'
+      'DATABASE_URL'
     );
     const c = loadConfig();
 
@@ -294,7 +294,7 @@ describe('config.database', () => {
     expect(c.database.name).toBe('insforge');
     expect(c.database.user).toBe('postgres');
     expect(c.database.password).toBe('postgres');
-    expect(c.database.postgrestBaseUrl).toBe('http://localhost:5430');
+    expect(c.database.url).toBeUndefined();
     expect(typeof c.database.dir).toBe('string');
   });
 
@@ -304,7 +304,7 @@ describe('config.database', () => {
     process.env.POSTGRES_DB = 'myapp';
     process.env.POSTGRES_USER = 'dbuser';
     process.env.POSTGRES_PASSWORD = 'securepass';
-    process.env.POSTGREST_BASE_URL = 'http://postgrest:3000';
+    process.env.DATABASE_URL = 'postgres://user:pass@neon.example/db?sslmode=require';
     const c = loadConfig();
 
     expect(c.database.host).toBe('db.internal');
@@ -312,7 +312,7 @@ describe('config.database', () => {
     expect(c.database.name).toBe('myapp');
     expect(c.database.user).toBe('dbuser');
     expect(c.database.password).toBe('securepass');
-    expect(c.database.postgrestBaseUrl).toBe('http://postgrest:3000');
+    expect(c.database.url).toBe('postgres://user:pass@neon.example/db?sslmode=require');
   });
 
   it('parses POSTGRES_PORT as integer', () => {
